@@ -1,10 +1,14 @@
 name = "Anomaly"
 uuid = "a40cd781-f393-47f2-8775-4fd2cd5a603c"
 authors = ["Marcin Koculak <koculak.marcin@gmail.com>"]
-version = "1.0.0-DEV"
+version = "0.1.0-DEV"
+
+[deps]
+EEGIO = "0b63a203-985a-4b95-9578-b702c99cc299"
+Telepathy = "0d7f22b2-4679-4055-8421-94b93cbff039"
 
 [compat]
-julia = "1.9"
+julia = "1.8"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
