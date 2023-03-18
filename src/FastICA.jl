@@ -4,6 +4,19 @@ using NPZ
 
 
 const n_components = 3 # how many ICA components
+
+const max_iter = 200
+
+
+function negentropy_logcosh(x::Real, alpha::Real=1.0)::Tuple{Real, Real}
+    x *= alpha
+    first_deriv = tanh(x)
+    second_deriv = alpha * (1 - first_deriv^2)
+
+    return first_deriv, second_deriv
+end
+
+
 npz = npzread("scikit_fastICA_BSS/sin_sign_saw.npz")["arr_0"]
 #print(typeofnpz)
 npz_cent = npz .- transpose(mean.(eachcol(npz)))
@@ -43,6 +56,25 @@ random_matr = [0.2519036  1.01005105 -0.74699474
 
 W = zeros((n_components, n_components))
 
+gderivs1 = Array{eltype(whitened)}(undef, size(whitened, 2))
+gderivs2 = Array{eltype(whitened)}(undef, size(whitened, 2))
+
 for i in 1:n_components
-    
+    w_row = copy(random_matr[i, :])
+    w_row ./= norm(w_row)
+
+    for k in 1:max_iter
+        w_rowX = transpose(w_row) * whitened
+
+        # Marcin recommends using for loops with memory preallocation like in C
+        for p in 1:size(whitened, 2)
+            tup = negentropy_logcosh(w_rowX[p])
+            gderivs1[p] = tup[1]
+            gderivs2[p] = tup[2]
+        end
+        
+        
+    end
 end
+
+# [ 0.19660421,  0.78831857, -0.58300996]
