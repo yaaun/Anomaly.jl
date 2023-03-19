@@ -5,8 +5,9 @@ using NPZ
 
 const n_components = 3 # how many ICA components
 
-const max_iter = 200
+const max_iter = 1
 
+const tolerance = 0.0001
 
 function negentropy_logcosh(x::Real, alpha::Real=1.0)::Tuple{Real, Real}
     x *= alpha
@@ -56,24 +57,41 @@ random_matr = [0.2519036  1.01005105 -0.74699474
 
 W = zeros((n_components, n_components))
 
-gderivs1 = Array{eltype(whitened)}(undef, size(whitened, 2))
-gderivs2 = Array{eltype(whitened)}(undef, size(whitened, 2))
+gd1 = Array{eltype(whitened)}(undef, size(whitened, 2))
+gd2 = Array{eltype(whitened)}(undef, size(whitened, 2))
+iter_counts = zeros(n_components)
 
 for i in 1:n_components
-    w_row = copy(random_matr[i, :])
-    w_row ./= norm(w_row)
+    w_row = copy(random_matr[i, :]) # random weights row vector
+    w_row = w_row / norm(w_row)
 
     for k in 1:max_iter
-        w_rowX = transpose(w_row) * whitened
+        w_rowX = transpose(w_row) * whitened # Python: np.dot(w_row.T, X) 
 
         # Marcin recommends using for loops with memory preallocation like in C
         for p in 1:size(whitened, 2)
-            tup = negentropy_logcosh(w_rowX[p])
-            gderivs1[p] = tup[1]
-            gderivs2[p] = tup[2]
+            gd1[p], gd2[p] = negentropy_logcosh(w_rowX[p])
         end
         
+        #show(size(mean(gderivs2)))
+        #println(typeof(mean(gderivs2)))
+        #println(size(w_row * 5))
+
+        # Single component extraction, step 2 in Wiki "FastICA" article
+        #println(size(mean(whitened .* transpose(gderivs1), dims=2)))
+        #println(size(w_row * mean(gderivs2)))
+        w1 = mean(whitened .* transpose(gd1), dims=2)[:, 1] - w_row * mean(gd2)
         
+        w2 = transpose(w1) * transpose(W[1:i, :]) * W[1:i, :]
+        w3 = w2 / norm(w2) # normalize to unit length
+
+        lim = abs(abs(sum(w3 .* w_row)) - 1)
+        w_row = w3
+
+        if lim < tolerance
+            break
+        end
+        #show(w1)
     end
 end
 
