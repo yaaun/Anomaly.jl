@@ -7,7 +7,7 @@ const n_components = 3 # how many ICA components
 
 const max_iter = 200
 
-const tolerance = 0.0001
+const tolerance = 0.000001
 
 function negentropy_logcosh(x::Real, alpha::Real=1.0)::Tuple{Real, Real}
     x *= alpha
@@ -63,7 +63,6 @@ iter_counts = zeros(Int, n_components)
 
 
 for i in 1:n_components
-    global w_row
     w_row = copy(random_matr[i, :]) # random weights row vector
     w_row = w_row / norm(w_row)
 
@@ -85,11 +84,12 @@ for i in 1:n_components
         #println(size(w_row * mean(gderivs2)))
         w1 = mean(whitened .* transpose(gd1), dims=2)[:, 1] - w_row * mean(gd2)
         
-        w2 = w1 - (transpose(w1) * transpose(W[1:i, :]) * W[1:i, :])
+        #w2 = w1 - (transpose(w1) * transpose(W[1:i, :]) * W[1:i, :])
+        w2 = w1' - transpose(w1) * transpose(W[1:i, :]) * W[1:i, :]
         w3 = w2 / norm(w2) # normalize to unit length
 
-        lim = abs(abs(sum(w3 .* w_row)) - 1)
-        w_row = w3
+        lim = abs(abs(sum(w3 .* transpose(w_row))) - 1)
+        w_row = transpose(w3)
 
         if lim < tolerance
             break
@@ -101,7 +101,9 @@ for i in 1:n_components
     W[i, :] = w_row
 end
 
-sources = transpose(W * whitening_mat * npz_cent) # _fastica.py line 663
+show(W)
+
+sources = transpose(W * whitening_mat * npz_cent') # _fastica.py line 663
                   # Should have dimensions (2000, 3)
 
 # We implement only for "arbitrary-variance" whitening in sklearn,
@@ -110,3 +112,4 @@ sources = transpose(W * whitening_mat * npz_cent) # _fastica.py line 663
 # W should be the unmixing matrix
 println("Done")
 # [ 0.19660421,  0.78831857, -0.58300996]
+
