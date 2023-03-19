@@ -61,6 +61,7 @@ gd1 = Array{eltype(whitened)}(undef, size(whitened, 2))
 gd2 = Array{eltype(whitened)}(undef, size(whitened, 2))
 iter_counts = zeros(Int, n_components)
 
+
 for i in 1:n_components
     w_row = copy(random_matr[i, :]) # random weights row vector
     w_row = w_row / norm(w_row)
@@ -96,6 +97,7 @@ for i in 1:n_components
     end
 
     iter_counts[i] = k
+    W[i, :] = w_row
 end
 
 # [ 0.19660421,  0.78831857, -0.58300996]
