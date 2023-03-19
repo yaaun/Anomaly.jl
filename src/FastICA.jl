@@ -59,12 +59,13 @@ W = zeros((n_components, n_components))
 
 gd1 = Array{eltype(whitened)}(undef, size(whitened, 2))
 gd2 = Array{eltype(whitened)}(undef, size(whitened, 2))
-iter_counts = zeros(n_components)
+iter_counts = zeros(Int, n_components)
 
 for i in 1:n_components
     w_row = copy(random_matr[i, :]) # random weights row vector
     w_row = w_row / norm(w_row)
 
+    k::Int = 0
     for k in 1:max_iter
         w_rowX = transpose(w_row) * whitened # Python: np.dot(w_row.T, X) 
 
@@ -93,6 +94,8 @@ for i in 1:n_components
         end
         #show(w1)
     end
+
+    iter_counts[i] = k
 end
 
 # [ 0.19660421,  0.78831857, -0.58300996]
